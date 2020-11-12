@@ -19,8 +19,8 @@ import com.mp.android.apps.monke.monkeybook.utils.DensityUtil;
 import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.ContentPageStatus;
 import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.ConverPageAnim;
 import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.MyPageAnimation;
-import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.scrollerAnim.PageAnimation;
 import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.scrollerAnim.ScrollPageAnim;
+import com.xinlan.imageeditlibrary.editimage.utils.BitmapUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,11 +78,11 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
 
         addView(durPageView);
 //        myConverPageAnim = new ConverPageAnim(getContext());
-        scrollPageAnim = new ScrollPageAnim(durPageView.getWidth(), durPageView.getHeight(), 0, 0, durPageView, onPageChangeListener);
+        scrollPageAnim = new ScrollPageAnim(screenWidth, screenHeight, 0, 0, durPageView, onPageChangeListener);
 
     }
 
-    PageAnimation.OnPageChangeListener onPageChangeListener = new PageAnimation.OnPageChangeListener() {
+    ScrollPageAnim.OnPageChangeListener onPageChangeListener = new ScrollPageAnim.OnPageChangeListener() {
         @Override
         public boolean hasPrev() {
             return false;
@@ -90,7 +90,7 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
 
         @Override
         public boolean hasNext() {
-            return false;
+            return hasNextBitmap();
         }
 
         @Override
@@ -98,6 +98,11 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
 
         }
     };
+
+    boolean hasNextBitmap() {
+        BitmapUtils.createBitmapFromView(scrollPageAnim.getNextBitmap(), viewContents.get(1), screenWidth, screenWidth);
+        return true;
+    }
 
     /**
      * 初始化读书内容页
@@ -163,7 +168,7 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
                 startX = x;
                 startY = y;
                 isMove = false;
-                scrollPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
+                scrollPageAnim.onTouchEvent(event);
 
 //                myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
                 break;
@@ -175,7 +180,7 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
                 }
                 // 如果滑动了，则进行翻页。
                 if (isMove) {
-                    scrollPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
+                    scrollPageAnim.onTouchEvent(event);
 
 //                    myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
                 }
@@ -196,7 +201,7 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
                         return true;
                     }
                 }
-                scrollPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
+                scrollPageAnim.onTouchEvent(event);
 
 //                myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
                 break;
@@ -206,6 +211,7 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
         }
         return super.onTouchEvent(event);
     }
+
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         if (viewContents.size() > 0) {
@@ -214,14 +220,15 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
             } else if (preAndNext()) {
                 viewContents.get(0).layout(left, -getHeight(), right, 0);
                 viewContents.get(1).layout(left, 0, right, getHeight());
-                viewContents.get(2).layout(left, getHeight(), right, getHeight()*2);
+                viewContents.get(2).layout(left, getHeight(), right, getHeight() * 2);
             } else if (onlyPre()) {
                 viewContents.get(0).layout(left, -getHeight(), right, 0);
                 viewContents.get(1).layout(left, 0, right, getHeight());
             } else if (onlyNext()) {
                 viewContents.get(0).layout(left, 0, right, getHeight());
                 viewContents.get(1).layout(left, 0, right, getHeight());
-            }        } else {
+            }
+        } else {
             super.onLayout(changed, left, top, right, bottom);
         }
     }
