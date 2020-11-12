@@ -127,16 +127,6 @@ public abstract class PageAnimation {
      */
     public abstract void abortAnim();
 
-    /**
-     * 获取背景板
-     * @return
-     */
-    public abstract Bitmap getBgBitmap();
-
-    /**
-     * 获取内容显示版面
-     */
-    public abstract Bitmap getNextBitmap();
 
     public enum Direction {
         NONE(true),NEXT(true), PRE(true), UP(false), DOWN(false);

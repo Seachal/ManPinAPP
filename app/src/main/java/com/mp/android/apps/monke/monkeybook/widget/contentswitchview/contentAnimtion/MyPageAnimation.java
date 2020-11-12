@@ -11,10 +11,10 @@ import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.ContentSwit
 
 import java.util.List;
 
-public abstract class PageAnimation {
+public abstract class MyPageAnimation {
     private Context context;
 
-    public PageAnimation(Context context) {
+    public MyPageAnimation(Context context) {
         this.context = context;
         scrollX = DensityUtil.dp2px(context, 30f);
         scrollY = DensityUtil.dp2px(context, 30f);

@@ -6,7 +6,7 @@ import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.BookContent
 
 import java.util.List;
 
-public abstract class HorizonPageAnim extends PageAnimation {
+public abstract class HorizonPageAnim extends MyPageAnimation {
 
     public HorizonPageAnim(Context context) {
         super(context);

@@ -3,6 +3,7 @@ package com.mp.android.apps.monke.monkeybook.widget.contentswitchview;
 import android.animation.Animator;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.os.Build;
@@ -17,12 +18,14 @@ import com.mp.android.apps.monke.monkeybook.ReadBookControl;
 import com.mp.android.apps.monke.monkeybook.utils.DensityUtil;
 import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.ContentPageStatus;
 import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.ConverPageAnim;
-import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.PageAnimation;
+import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.MyPageAnimation;
+import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.scrollerAnim.PageAnimation;
+import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.scrollerAnim.ScrollPageAnim;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ContentSwitchView extends FrameLayout implements BookContentView.SetDataListener,PageAnimation.onLayoutStatus {
+public class ContentSwitchView extends FrameLayout implements BookContentView.SetDataListener, MyPageAnimation.onLayoutStatus {
     private final int screenWidth = DensityUtil.getWindowWidth(getContext());
     private final int screenHeight = DensityUtil.getWindowHeight(getContext());
 
@@ -61,6 +64,7 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
 
     private ReadBookControl readBookControl;
     ConverPageAnim myConverPageAnim;
+    ScrollPageAnim scrollPageAnim;
 
     private void init() {
         readBookControl = ReadBookControl.getInstance();
@@ -73,8 +77,27 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
         viewContents.add(durPageView);
 
         addView(durPageView);
-        myConverPageAnim = new ConverPageAnim(getContext());
+//        myConverPageAnim = new ConverPageAnim(getContext());
+        scrollPageAnim = new ScrollPageAnim(durPageView.getWidth(), durPageView.getHeight(), 0, 0, durPageView, onPageChangeListener);
+
     }
+
+    PageAnimation.OnPageChangeListener onPageChangeListener = new PageAnimation.OnPageChangeListener() {
+        @Override
+        public boolean hasPrev() {
+            return false;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return false;
+        }
+
+        @Override
+        public void pageCancel() {
+
+        }
+    };
 
     /**
      * 初始化读书内容页
@@ -88,6 +111,8 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
             public void onGlobalLayout() {
                 if (bookReadInitListener != null) {
                     bookReadInitListener.success();
+
+
                 }
                 durPageView.getTvContent().getViewTreeObserver().removeOnGlobalLayoutListener(this);
             }
@@ -122,6 +147,13 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
     private boolean isMove = false;
 
     @Override
+    public void computeScroll() {
+        scrollPageAnim.scrollAnim();
+        super.computeScroll();
+
+    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent event) {
         int action = event.getAction();
         int x = (int) event.getX();
@@ -131,7 +163,9 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
                 startX = x;
                 startY = y;
                 isMove = false;
-                myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
+                scrollPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
+
+//                myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
                 break;
             case MotionEvent.ACTION_MOVE:
                 // 判断是否大于最小滑动值。
@@ -141,7 +175,9 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
                 }
                 // 如果滑动了，则进行翻页。
                 if (isMove) {
-                    myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
+                    scrollPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
+
+//                    myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:  //小米8长按传送门会引导手势进入action_cancel
@@ -160,7 +196,9 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
                         return true;
                     }
                 }
-                myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
+                scrollPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
+
+//                myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
                 break;
             default:
                 break;
@@ -168,17 +206,34 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
         }
         return super.onTouchEvent(event);
     }
-
-
-
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         if (viewContents.size() > 0) {
-            myConverPageAnim.onLayout(changed, left, top, right, bottom, this, viewContents);
-        } else {
+            if (onlyOne()) {
+                viewContents.get(0).layout(left, 0, right, getHeight());
+            } else if (preAndNext()) {
+                viewContents.get(0).layout(left, -getHeight(), right, 0);
+                viewContents.get(1).layout(left, 0, right, getHeight());
+                viewContents.get(2).layout(left, getHeight(), right, getHeight()*2);
+            } else if (onlyPre()) {
+                viewContents.get(0).layout(left, -getHeight(), right, 0);
+                viewContents.get(1).layout(left, 0, right, getHeight());
+            } else if (onlyNext()) {
+                viewContents.get(0).layout(left, 0, right, getHeight());
+                viewContents.get(1).layout(left, 0, right, getHeight());
+            }        } else {
             super.onLayout(changed, left, top, right, bottom);
         }
     }
+
+//    @Override
+//    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+//        if (viewContents.size() > 0) {
+//            myConverPageAnim.onLayout(changed, left, top, right, bottom, this, viewContents);
+//        } else {
+//            super.onLayout(changed, left, top, right, bottom);
+//        }
+//    }
 
     public void setInitData(int durChapterIndex, int chapterAll, int durPageIndex) {
 //        updateOtherPage(durChapterIndex, chapterAll, durPageIndex, -1);
@@ -187,6 +242,11 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
 
         if (loadDataListener != null)
             loadDataListener.updateProgress(durPageView.getDurChapterIndex(), durPageView.getDurPageIndex());
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        scrollPageAnim.draw(canvas);
     }
 
     public void setState(int state) {
