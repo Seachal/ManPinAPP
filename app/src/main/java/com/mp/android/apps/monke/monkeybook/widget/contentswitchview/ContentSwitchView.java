@@ -19,8 +19,6 @@ import com.mp.android.apps.monke.monkeybook.utils.DensityUtil;
 import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.ContentPageStatus;
 import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.ConverPageAnim;
 import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.MyPageAnimation;
-import com.mp.android.apps.monke.monkeybook.widget.contentswitchview.contentAnimtion.scrollerAnim.ScrollPageAnim;
-import com.xinlan.imageeditlibrary.editimage.utils.BitmapUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +62,6 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
 
     private ReadBookControl readBookControl;
     ConverPageAnim myConverPageAnim;
-    ScrollPageAnim scrollPageAnim;
 
     private void init() {
         readBookControl = ReadBookControl.getInstance();
@@ -77,31 +74,8 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
         viewContents.add(durPageView);
 
         addView(durPageView);
-//        myConverPageAnim = new ConverPageAnim(getContext());
-        scrollPageAnim = new ScrollPageAnim(screenWidth, screenHeight, 0, 0, durPageView, onPageChangeListener);
+        myConverPageAnim = new ConverPageAnim(getContext());
 
-    }
-
-    ScrollPageAnim.OnPageChangeListener onPageChangeListener = new ScrollPageAnim.OnPageChangeListener() {
-        @Override
-        public boolean hasPrev() {
-            return false;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return hasNextBitmap();
-        }
-
-        @Override
-        public void pageCancel() {
-
-        }
-    };
-
-    boolean hasNextBitmap() {
-        BitmapUtils.createBitmapFromView(scrollPageAnim.getNextBitmap(), viewContents.get(1), screenWidth, screenWidth);
-        return true;
     }
 
     /**
@@ -151,12 +125,6 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
     // 手势是否在移动
     private boolean isMove = false;
 
-    @Override
-    public void computeScroll() {
-        scrollPageAnim.scrollAnim();
-        super.computeScroll();
-
-    }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -168,9 +136,8 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
                 startX = x;
                 startY = y;
                 isMove = false;
-                scrollPageAnim.onTouchEvent(event);
 
-//                myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
+                myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
                 break;
             case MotionEvent.ACTION_MOVE:
                 // 判断是否大于最小滑动值。
@@ -180,9 +147,8 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
                 }
                 // 如果滑动了，则进行翻页。
                 if (isMove) {
-                    scrollPageAnim.onTouchEvent(event);
 
-//                    myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
+                    myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:  //小米8长按传送门会引导手势进入action_cancel
@@ -201,9 +167,8 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
                         return true;
                     }
                 }
-                scrollPageAnim.onTouchEvent(event);
 
-//                myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
+                myConverPageAnim.onTouchEvent(event, this, viewContents, ContentSwitchView.this, loadDataListener);
                 break;
             default:
                 break;
@@ -215,32 +180,11 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
         if (viewContents.size() > 0) {
-            if (onlyOne()) {
-                viewContents.get(0).layout(left, 0, right, getHeight());
-            } else if (preAndNext()) {
-                viewContents.get(0).layout(left, -getHeight(), right, 0);
-                viewContents.get(1).layout(left, 0, right, getHeight());
-                viewContents.get(2).layout(left, getHeight(), right, getHeight() * 2);
-            } else if (onlyPre()) {
-                viewContents.get(0).layout(left, -getHeight(), right, 0);
-                viewContents.get(1).layout(left, 0, right, getHeight());
-            } else if (onlyNext()) {
-                viewContents.get(0).layout(left, 0, right, getHeight());
-                viewContents.get(1).layout(left, 0, right, getHeight());
-            }
+            myConverPageAnim.onLayout(changed, left, top, right, bottom, this, viewContents);
         } else {
             super.onLayout(changed, left, top, right, bottom);
         }
     }
-
-//    @Override
-//    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-//        if (viewContents.size() > 0) {
-//            myConverPageAnim.onLayout(changed, left, top, right, bottom, this, viewContents);
-//        } else {
-//            super.onLayout(changed, left, top, right, bottom);
-//        }
-//    }
 
     public void setInitData(int durChapterIndex, int chapterAll, int durPageIndex) {
 //        updateOtherPage(durChapterIndex, chapterAll, durPageIndex, -1);
@@ -249,11 +193,6 @@ public class ContentSwitchView extends FrameLayout implements BookContentView.Se
 
         if (loadDataListener != null)
             loadDataListener.updateProgress(durPageView.getDurChapterIndex(), durPageView.getDurPageIndex());
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        scrollPageAnim.draw(canvas);
     }
 
     public void setState(int state) {
