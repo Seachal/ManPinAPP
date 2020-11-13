@@ -241,7 +241,7 @@ public class ReadActivity extends BaseMVPActivity<ReadContract.Presenter>
         // 如果 API < 18 取消硬件加速
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2
                 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            mPvPage.setLayerType(LAYER_TYPE_SOFTWARE, null);
+            mPvPage.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         }
 
         //获取页面加载器
